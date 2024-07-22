@@ -1,0 +1,91 @@
+Name: Junfei Zhang
+Login ID: junfeiz
+Student ID: 1255069
+
+ANSWERS=================================================================================================================
+
+1. Should the server accept calls from everyone, or just a subset of users?
+For the RPC system that we are implementing, I would suggest it to accept calls from a subset of authenticated users.
+The first reason is for security. If the data being sent back is sensitive and should be protected, only authenticated
+users can access. Moreover, if there is a malicious user attempting to hack the system, having an authentication can
+limit the risk. Another reason is that by limiting the users that can access the server's functions, this saves
+resources as well.
+
+2. Should authentication etc. be provided by the RPC framework, or by the functions that use the RPC framework?
+While making the functions responsible for handling the authentication process can tailor it to specific needs, and can
+have more function specific control to the authentication, I would suggest for the RPC framework to provide the
+authentication process. This is because making the functions handle the authentication is more complex considering the
+current data being transmitted are simple so might not worth it. The development process can be simplified if the RPC
+system has handles built-in authentication and is more suitable for this RPC system.
+
+3. What transport layer protocol should be used? What are the trade-offs?
+TCP should be used instead of UDP. This is because for our RPC system, the data being sent are not of a large amount,
+but should be very precise. Data accuracy can be better handled by TCP. The trade-off is that TCP is reliable and can
+ensure data integrity and ordered delivery, however it may have a higher overhead due to its maintenance. On the other
+hand, UDP is connectionless and unreliable protocol, but offers lower overhead. For this task, data should be delivered
+precisely so TCP is preferred.
+
+4. In which function(s) should the socket(s) be created?
+THe sockets should be created in these functions:
+1. rpc_server_init, this creates the server's socket
+2. rpc_client_init, this creates the client's socket
+3. rpc_serve_all, where server accepts a client's connection and creates a new socket to communicate with the client
+
+5. Should rpc_client and rpc_server be allocated dynamically or statically? What are the implications for the client and server code?
+rpc_client and rpc_server should be allocated dynamically. This allows the system to be more flexible, and allows
+better handling of creating and destroying the client and the server instances. This also provides better resource
+management. The implication for the code is that if we use a static allocation, the maximum number of clients must be
+known in advanced.
+
+6. What happens if one host uses big-endian byte order and the other uses little-endian? How does that relate to “network byte order”?
+If one host uses big-endian byte order and the other one uses little-endian, the data being sent and received can be
+mismatched. This is because big-endian byte order takes the most significant byte first whereas little-endian byte order
+takes the least significant byte first. 'Network byte order' is a standardized, agreed byte order for the data being
+sent through the network. This ensures that the two parties can receive data in a known format so that the data can be
+converted to the host byte order correctly.
+
+PROTOCOL================================================================================================================
+Protocol Name: RPC
+Version: IPv6
+
+Header:
+client to server -------------
+FIND: finds a procedure
+CALL: calls a procedure
+server to client -------------
+YESS: a procedure is found
+DATA: data is being sent back
+NULL: invalid request
+
+Payload Format:
+Data1
+Data2
+Data2 Length
+
+Variable Length:
+Data2 length < 100,000
+
+Data Encoding:
+Fix size encoding.
+Data1: uint64_t
+Data2_len: uint32_t
+
+Byte order:
+Data should be sent in network byte order (big-endian).
+
+Error Handling:
+1. Client request for non-exist procedure: server send NULL to client
+2. Client send invalid data: server will not respond
+3. data2_len is too large: relevant function will print "Overlength error" to stderr and return an error
+4. Server will not send invalid data back to client, will send NULL if the data is invalid
+
+Transport Layer Protocol:
+TCP is used as the transport layer protocol due to its reliability and connection-oriented mechanism. The pros is that
+it provides data integrity which is required for the current RPC system. An alternative is UDP, the pros is that it has
+a lower overhead, but it is unreliable in delivering data.
+
+Handling IP Packet Loss and Duplication:
+The RPC framework uses TCP, which provides reliable delivery of packets.
+
+Maximum IP Packet Size:
+TCP will automatically handle fragmentation and reassembly if the packet sizes is larger than the limit.
